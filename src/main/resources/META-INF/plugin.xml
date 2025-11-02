@@ -1,0 +1,33 @@
+<idea-plugin>
+    <id>com.wdf.api</id>
+    <name>FuDoc</name>
+    <version>1.0.0</version>
+    <vendor email="wangdingfu1024@163.com" url="https://github.com/wangdingfu">WANG DINGFU</vendor>
+
+    <description>
+        <![CDATA[ Description will be added by gradle build]]>
+    </description>
+    <!-- please see https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html for description -->
+    <idea-version since-build="222"/>
+    <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
+         on how to target different products -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.java</depends>
+
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="Fu Trade"
+                    icon="FuIcons.FU_TRADE"
+                    anchor="right"
+                    secondary="false"
+                    doNotActivateOnStart="true"
+                    order="last"
+                    factoryClass="com.wdf.trade.toolwindow.FuTradeToolWindowFactory"/>
+    </extensions>
+
+
+    <actions>
+
+    </actions>
+
+</idea-plugin>
