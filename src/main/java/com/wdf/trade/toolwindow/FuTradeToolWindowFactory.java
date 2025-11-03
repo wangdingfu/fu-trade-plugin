@@ -12,11 +12,10 @@ public class FuTradeToolWindowFactory implements ToolWindowFactory, DumbAware {
 
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-        ContentFactory contentFactory = ContentFactory.getInstance();
         FuTradeWindow fuTradeWindow = new FuTradeWindow(project, toolWindow);
+        // 将面板添加到工具窗口
+        ContentFactory contentFactory = ContentFactory.getInstance();
         Content content = contentFactory.createContent(fuTradeWindow, "", false);
-//        DefaultActionGroup defaultActionGroup = FuRequestToolBarManager.getInstance(fuRequestWindow).initToolBar();
-//        toolWindow.setTitleActions(Lists.newArrayList(defaultActionGroup.getChildActionsOrStubs()));
         toolWindow.getContentManager().addContent(content);
     }
 }
