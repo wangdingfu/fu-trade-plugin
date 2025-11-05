@@ -25,12 +25,29 @@ public class TencentFetchStockStrategy implements FetchStockStrategy{
         try {
             return parseStockSegment(HttpUtil.get(requestUrl));
         }catch (Exception e){
-            log.warn("从东方财富获取股票实时信息异常:{}",e.getMessage());
+            log.warn("从腾讯获取股票实时信息异常:{}",e.getMessage());
         }
         return new ArrayList<>();
     }
 
-
+    /**
+     * values[3]==>当前价
+     * values[4]==>昨收
+     * values[5]==>今开
+     * values[6]==>成交量
+     * values[30]==>时间
+     * values[31]==>涨跌
+     * values[32]==>涨幅 后需要新增%
+     * values[33]==>当天最高价
+     * values[34]==>当天最低价
+     * values[36]==>成交量
+     * values[37]==>成交额
+     * values[38]==>换手 后需要新增%
+     * values[43]==>振幅
+     * values[44]==>流通值 单位：亿
+     * values[45]==>总市值 单位：亿
+     * values[46]==>市净率
+     */
     private static List<StockInfo> parseStockSegment(String result) {
         List<StockInfo> stockInfoList = new ArrayList<>();
         String[] lines = result.split("\n");
