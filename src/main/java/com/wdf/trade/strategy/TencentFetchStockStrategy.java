@@ -59,7 +59,8 @@ public class TencentFetchStockStrategy implements FetchStockStrategy{
             bean.setStockCode(code);
             bean.setStockName(values[1]);
             bean.setCurrentPrice(values[3]);
-            bean.setIncreaseRate(values[31]);
+            bean.setIncreaseRate(values[32]+"%");
+            bean.setVolume(values[36]);
             stockInfoList.add(bean);
         }
         return stockInfoList;
