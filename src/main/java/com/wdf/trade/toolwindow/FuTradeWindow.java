@@ -1,15 +1,22 @@
 package com.wdf.trade.toolwindow;
 
 import com.google.common.collect.Lists;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.IconUtil;
 import com.wdf.trade.strategy.FetchStockStrategy;
 import com.wdf.trade.strategy.StockInfo;
 import com.wdf.trade.strategy.TencentFetchStockStrategy;
+import org.apache.commons.collections.CollectionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -18,6 +25,7 @@ import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Vector;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -58,8 +66,31 @@ public class FuTradeWindow extends SimpleToolWindowPanel implements DataProvider
         };
         // 使用 IDEA 风格的表格
         stockTable = new JBTable(tableModel);
+        ToolbarDecorator decorator = ToolbarDecorator.createDecorator(stockTable);
+        decorator.addExtraAction(new AnActionButton("添加股票","", IconUtil.getAddIcon()) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
+                String userInput = Messages.showInputDialog(
+                        project,
+                        "请输入股票代码：",  // 提示信息
+                        "添加股票",    // 窗口标题
+                        IconUtil.getAddIcon(),  // 图标
+                        "sz300037",  // 默认文本（空表示无默认值）
+                        null  // 输入验证器（可选，后面会讲）
+                );
+                // 处理用户输入（点击“确定”返回输入内容，点击“取消”返回 null）
+                if (userInput != null) {
+                    // 这里可以添加你的业务逻辑，例如显示输入的内容
+                    List<StockInfo> stockInfos = fetchStockData(Lists.newArrayList(userInput));
+                    if(CollectionUtils.isNotEmpty(stockInfos)){
+                        stockInfos.forEach(stockInfo -> tableModel.addRow(toTableData(stockInfo)));
+                    }
+                }
+
+            }
+        });
         // 添加滚动条（避免数据过多溢出）
-        this.rootPanel.add(new JBScrollPane(stockTable), BorderLayout.CENTER);
+        this.rootPanel.add(decorator.createPanel(), BorderLayout.CENTER);
     }
 
     // 初始化时间标签（放在表格下方）
@@ -82,8 +113,24 @@ public class FuTradeWindow extends SimpleToolWindowPanel implements DataProvider
 
     private List<StockInfo> fetchLatestStockData() {
         // 实际应替换为真实API请求（如通过OkHttp、HttpClient）
+        Vector<Vector> dataVector = tableModel.getDataVector();
+        List<String> codeList = Lists.newArrayList();
+        dataVector.forEach(data->{
+            Object o = data.get(0);
+            if(Objects.nonNull(o)){
+                codeList.add(o.toString());
+            }
+        });
+        return fetchStockData(codeList);
+    }
+
+
+    private List<StockInfo> fetchStockData(List<String> codeList) {
+        if(CollectionUtils.isEmpty(codeList)){
+            return Lists.newArrayList();
+        }
         FetchStockStrategy fetchStockStrategy = new TencentFetchStockStrategy();
-        return fetchStockStrategy.fetch(Lists.newArrayList("sz300037"));
+        return fetchStockStrategy.fetch(codeList);
     }
 
 
