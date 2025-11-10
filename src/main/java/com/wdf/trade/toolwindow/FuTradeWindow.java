@@ -17,6 +17,7 @@ import com.wdf.trade.common.FuBundle;
 import com.wdf.trade.strategy.StockInfo;
 import com.wdf.trade.util.ToolBarUtils;
 import com.wdf.trade.view.StockView;
+import icons.FuIcons;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -64,7 +65,7 @@ public class FuTradeWindow extends SimpleToolWindowPanel implements DataProvider
     }
 
     private void initActionGroup() {
-        this.actionGroup.add(new AnAction("添加股票分组", "", IconUtil.getAddIcon()) {
+        this.actionGroup.add(new AnAction("添加股票分组", "", FuIcons.FU_ADD_STOCK_GROUP) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
                 String userInput = Messages.showInputDialog(project, ADD_STOCK_GROUP_MESSAGE, ADD_STOCK_GROUP_TITLE, IconUtil.getAddIcon(), "我的分组", null);
@@ -79,7 +80,7 @@ public class FuTradeWindow extends SimpleToolWindowPanel implements DataProvider
                 }
             }
         });
-        this.actionGroup.add(new AnAction(ADD_STOCK_TITLE, "", IconUtil.getAddIcon()) {
+        this.actionGroup.add(new AnAction(ADD_STOCK_TITLE, "", FuIcons.FU_ADD_STOCK) {
             @Override
             public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
                 String userInput = Messages.showInputDialog(project, ADD_STOCK_MESSAGE, ADD_STOCK_TITLE, IconUtil.getAddIcon(), "sz300037", null);
