@@ -1,22 +1,15 @@
 package com.wdf.trade.view;
 
 import com.google.common.collect.Lists;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.IconUtil;
-import com.wdf.trade.common.FuBundle;
 import com.wdf.trade.strategy.FetchStockStrategy;
 import com.wdf.trade.strategy.StockInfo;
 import com.wdf.trade.strategy.TencentFetchStockStrategy;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -26,9 +19,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Vector;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class StockView {
@@ -51,6 +41,8 @@ public class StockView {
      */
     private final String group;
 
+    private final ScheduledTaskManager scheduledTaskManager;
+
     public StockView(Project project, String group) {
         this.project = project;
         this.group = group;
@@ -67,8 +59,20 @@ public class StockView {
             }
         };
         initStockTable();
+        scheduledTaskManager = new ScheduledTaskManager();
+    }
 
-        startDataRefreshTask();
+
+    public void startTask() {
+        scheduledTaskManager.startTask(this::loadStockData);
+    }
+
+    public void stopTask() {
+        scheduledTaskManager.stopTask();
+    }
+
+    public void shutdownTask() {
+        scheduledTaskManager.shutdownExecutor();
     }
 
 
@@ -78,18 +82,17 @@ public class StockView {
         this.rootPanel.add(decorator.createPanel(), BorderLayout.CENTER);
     }
 
-
-    private void startDataRefreshTask() {
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-        // 每30秒刷新一次数据（首次延迟1秒）
-        executor.scheduleAtFixedRate(() -> {
-            log.info("分组【{}】刷新股票数据", group);
-            // 实际场景：调用股票接口获取数据
-            java.util.List<StockInfo> stockInfoList = fetchLatestStockData();
-            // 在EDT线程中更新UI（Swing线程安全）
-            SwingUtilities.invokeLater(() -> updateStockData(stockInfoList));
-        }, 1, 3, TimeUnit.SECONDS);
+    /**
+     * 加载列表中的股票
+     */
+    private void loadStockData() {
+        log.info("分组【{}】刷新股票数据", group);
+        // 实际场景：调用股票接口获取数据
+        java.util.List<StockInfo> stockInfoList = fetchLatestStockData();
+        // 在EDT线程中更新UI（Swing线程安全）
+        SwingUtilities.invokeLater(() -> updateStockData(stockInfoList));
     }
+
 
     private List<StockInfo> fetchLatestStockData() {
         // 实际应替换为真实API请求（如通过OkHttp、HttpClient）
@@ -106,14 +109,15 @@ public class StockView {
 
     /**
      * 添加股票到表格中
+     *
      * @param code 股票代码
      */
-    public void addStock(String code){
+    public void addStock(String code) {
         List<StockInfo> stockInfos = fetchStockData(Lists.newArrayList(code));
-        if(CollectionUtils.isEmpty(stockInfos)){
+        if (CollectionUtils.isEmpty(stockInfos)) {
             return;
         }
-        stockInfos.forEach(f->tableModel.addRow(toTableData(f)));
+        stockInfos.forEach(f -> tableModel.addRow(toTableData(f)));
     }
 
     private List<StockInfo> fetchStockData(List<String> codeList) {

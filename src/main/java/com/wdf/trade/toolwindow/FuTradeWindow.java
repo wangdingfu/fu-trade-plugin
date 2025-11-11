@@ -1,33 +1,32 @@
 package com.wdf.trade.toolwindow;
 
-import com.google.common.collect.Lists;
 import com.intellij.find.editorHeaderActions.Utils;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsListener;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.IconUtil;
 import com.wdf.trade.common.FuBundle;
-import com.wdf.trade.strategy.StockInfo;
 import com.wdf.trade.util.ToolBarUtils;
 import com.wdf.trade.view.StockView;
 import icons.FuIcons;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FuTradeWindow extends SimpleToolWindowPanel implements DataProvider {
 
@@ -39,8 +38,11 @@ public class FuTradeWindow extends SimpleToolWindowPanel implements DataProvider
     private static final String ADD_STOCK_GROUP_MESSAGE = FuBundle.message("add.stock.group.message");
     private static final String ADD_STOCK_TITLE = FuBundle.message("add.stock.title");
     private static final String ADD_STOCK_MESSAGE = FuBundle.message("add.stock.message");
+    private static final String STOCK_AUTO_LOAD_TITLE = FuBundle.message("stock.auto.load.title");
 
-    private final Map<String,StockView> stockViewMap = new HashMap<>();
+    private final AtomicBoolean isExecute = new AtomicBoolean(false);
+
+    private final Map<String, StockView> stockViewMap = new HashMap<>();
 
     public FuTradeWindow(@NotNull Project project, ToolWindow toolWindow) {
         super(Boolean.TRUE, Boolean.TRUE);
@@ -48,6 +50,19 @@ public class FuTradeWindow extends SimpleToolWindowPanel implements DataProvider
         this.rootPanel = new JPanel(new BorderLayout());
         this.actionGroup = new DefaultActionGroup();
         tabs = new JBTabsImpl(project);
+        tabs.addListener(new TabsListener() {
+            @Override
+            public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
+                StockView stockView = stockViewMap.get(oldSelection.getText());
+                if (Objects.nonNull(stockView)) {
+                    stockView.stopTask();
+                }
+                StockView newStockView = stockViewMap.get(newSelection.getText());
+                if (Objects.nonNull(newStockView)) {
+                    newStockView.startTask();
+                }
+            }
+        }, () -> stockViewMap.forEach((key, value) -> value.shutdownTask()));
         setContent(this.rootPanel);
         this.rootPanel.add(initToolBarUI(), BorderLayout.NORTH);
         this.rootPanel.add(tabs, BorderLayout.CENTER);
@@ -86,18 +101,56 @@ public class FuTradeWindow extends SimpleToolWindowPanel implements DataProvider
                 String userInput = Messages.showInputDialog(project, ADD_STOCK_MESSAGE, ADD_STOCK_TITLE, IconUtil.getAddIcon(), "sz300037", null);
                 // 处理用户输入（点击“确定”返回输入内容，点击“取消”返回 null）
                 if (userInput != null) {
-                    TabInfo selectedInfo = tabs.getSelectedInfo();
-                    if(Objects.isNull(selectedInfo)){
-                        return;
-                    }
-                    StockView stockView = stockViewMap.get(selectedInfo.getText());
-                    if(Objects.isNull(stockView)){
-                        return;
-                    }
-                    stockView.addStock(userInput);
+                    getSelected().ifPresent(stockView -> {
+                        stockView.addStock(userInput);
+                    });
                 }
             }
         });
+        //启动定时刷新股票
+        this.actionGroup.add(new DumbAwareAction(STOCK_AUTO_LOAD_TITLE, "", AllIcons.Actions.Execute) {
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
+                getSelected().ifPresent(stockView -> {
+                    stockView.startTask();
+                    isExecute.set(true);
+                });
+            }
+        });
+        //停止定时刷新股票
+        defaultActionGroup.addAction(new DumbAwareAction("停止刷新", "", AllIcons.Actions.Suspend) {
+            @Override
+            public @NotNull ActionUpdateThread getActionUpdateThread() {
+                return ActionUpdateThread.BGT;
+            }
+
+            @Override
+            public void update(@NotNull AnActionEvent e) {
+                Presentation presentation = e.getPresentation();
+                presentation.setEnabled(isExecute.get());
+            }
+
+            @Override
+            public void actionPerformed(@NotNull AnActionEvent e) {
+                getSelected().ifPresent(stockView -> {
+                    stockView.stopTask();
+                    isExecute.set(false);
+                });
+            }
+        });
+    }
+
+
+    public Optional<StockView> getSelected() {
+        TabInfo selectedInfo = tabs.getSelectedInfo();
+        if (Objects.isNull(selectedInfo)) {
+            return Optional.empty();
+        }
+        StockView stockView = stockViewMap.get(selectedInfo.getText());
+        if (Objects.isNull(stockView)) {
+            return Optional.empty();
+        }
+        return Optional.of(stockView);
     }
 
 
