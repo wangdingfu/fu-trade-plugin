@@ -1,13 +1,10 @@
 package com.wdf.trade.util;
 
-import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 
 import javax.swing.*;
-import java.awt.*;
 
 /**
  * @author wangdingfu
@@ -31,32 +28,9 @@ public class ToolBarUtils {
 
 
     public static JComponent addActionToToolBar(JComponent targetComponent, String place, ActionGroup actionGroup) {
-        ActionToolbarImpl toolbar = (ActionToolbarImpl) ActionManager.getInstance().createActionToolbar(place, actionGroup, true);
+        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(place, actionGroup, true);
         toolbar.setTargetComponent(targetComponent);
-        toolbar.setForceMinimumSize(true);
-        toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-        Utils.setSmallerFontForChildren(toolbar);
         toolbar.getComponent().setBackground(targetComponent.getBackground());
         return toolbar.getComponent();
-    }
-
-
-    /**
-     * 生成工具栏面板
-     *
-     * @param place       工具栏面板别名
-     * @param actionGroup 工具栏动作分组
-     * @param layout      工具栏面板布局
-     * @return 工具栏面板
-     */
-    public static JPanel genToolBarPanel(String place, ActionGroup actionGroup, String layout) {
-        JPanel toolBarPanel = new JPanel(new BorderLayout());
-        ActionToolbarImpl toolbar = (ActionToolbarImpl) ActionManager.getInstance().createActionToolbar(place, actionGroup, true);
-        toolbar.setTargetComponent(toolBarPanel);
-        toolbar.setForceMinimumSize(true);
-        toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-        Utils.setSmallerFontForChildren(toolbar);
-        toolBarPanel.add(toolbar.getComponent(), layout);
-        return toolBarPanel;
     }
 }

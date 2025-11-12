@@ -8,7 +8,7 @@ plugins {
     // Java support
     id("java")
     // Gradle IntelliJ Plugin
-    id("org.jetbrains.intellij") version "1.16.1"
+    id("org.jetbrains.intellij.platform") version "2.10.4"
     // Gradle Changelog Plugin
     id("org.jetbrains.changelog") version "1.3.1"
     kotlin("jvm") version "1.9.0"  // 添加这行，指定 Kotlin 版本

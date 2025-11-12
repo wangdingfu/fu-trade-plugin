@@ -17,7 +17,6 @@ import com.wdf.trade.common.FuBundle;
 import com.wdf.trade.util.ToolBarUtils;
 import com.wdf.trade.view.StockView;
 import icons.FuIcons;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -84,7 +83,7 @@ public class FuTradeWindow extends SimpleToolWindowPanel implements DataProvider
             @Override
             public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
                 String userInput = Messages.showInputDialog(project, ADD_STOCK_GROUP_MESSAGE, ADD_STOCK_GROUP_TITLE, IconUtil.getAddIcon(), "我的分组", null);
-                if (StringUtils.isNotBlank(userInput)) {
+                if (userInput != null && !userInput.isEmpty()) {
                     StockView stockView = new StockView(project, userInput);
                     TabInfo tabInfo = new TabInfo(stockView.getRootPanel());
                     tabInfo.setText(userInput);
@@ -100,7 +99,7 @@ public class FuTradeWindow extends SimpleToolWindowPanel implements DataProvider
             public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
                 String userInput = Messages.showInputDialog(project, ADD_STOCK_MESSAGE, ADD_STOCK_TITLE, IconUtil.getAddIcon(), "sz300037", null);
                 // 处理用户输入（点击“确定”返回输入内容，点击“取消”返回 null）
-                if (userInput != null) {
+                if (userInput != null && !userInput.isEmpty()) {
                     getSelected().ifPresent(stockView -> {
                         stockView.addStock(userInput);
                     });
@@ -118,7 +117,7 @@ public class FuTradeWindow extends SimpleToolWindowPanel implements DataProvider
             }
         });
         //停止定时刷新股票
-        defaultActionGroup.addAction(new DumbAwareAction("停止刷新", "", AllIcons.Actions.Suspend) {
+        this.actionGroup.addAction(new DumbAwareAction("停止刷新", "", AllIcons.Actions.Suspend) {
             @Override
             public @NotNull ActionUpdateThread getActionUpdateThread() {
                 return ActionUpdateThread.BGT;
